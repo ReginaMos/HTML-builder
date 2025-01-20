@@ -1,48 +1,57 @@
 const fs = require('fs');
 const path = require("path");
 
-const dirPath = path.join(__dirname, 'files');
-const copyDirPath = path.join(__dirname, 'files-copy');
+function deleteFiles(dirPath) {
+    fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+        if (err) console.log(err);
+        else {
+            files.forEach(file => {
+                const filePath = path.join(dirPath, file.name);
 
-fs.stat(copyDirPath, (err, stats) => {
-    if (err) {
-        fs.mkdir(copyDirPath, (err) => {
-            if (err) console.log(err);
-        });
-    }
+                if (file.isDirectory()) {
+                    deleteFiles(filePath);
+                    
+                    fs.rmdir(filePath, (err) => {
+                        if (err) console.log(err);
+                    });
+                } else {
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.log(err);
+                    });
+                }
+        
+            })
+        }
+    });
+}
 
-    fs.readdir(dirPath,
-        { withFileTypes: true },
-        (err, files) => {
+function copyDir(copyDirPath, dirPath) {
+    fs.stat(copyDirPath, (err, stats) => {
+        if (err) {
+            fs.mkdir(copyDirPath, (err) => {
+                if (err) console.log(err);
+            });
+        } else { 
+            deleteFiles(copyDirPath);
+        }
+
+        fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
             if (err) console.log(err);
             else {
                 files.forEach(file => {
                     const filePath = path.join(dirPath, file.name);
+                    if (file.isDirectory()) {
+                        const dirForDirectory = path.join(copyDirPath, file.name);
+                        copyDir(dirForDirectory, filePath);
+                    }
+
                     fs.copyFile(filePath, path.join(copyDirPath, file.name), (err) => {
                         if (err) console.log(err);
                     })
                 });
             }
-      });
-});
-
-fs.readdir(copyDirPath, { withFileTypes: true }, (err, files) => {
-    if (err) console.log(err);
-    else {
-        files.forEach(file => {
-            const filePath = path.join(dirPath, file.name);
-            fs.stat(filePath, (err, stats) => {
-                if (err) {
-                    const deleteFilePath = path.join(copyDirPath, file.name);
-                    fs.unlink(deleteFilePath, (err) => {
-                        if (err) console.log(err);
-                    });
-                }
-            })
         });
-    }
-  });
+    });
+}
 
-
-
-
+copyDir(path.join(__dirname, 'files-copy'), path.join(__dirname, 'files'));
