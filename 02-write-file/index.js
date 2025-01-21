@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require("path");
 
 const filepath = path.join(__dirname, '02text.txt');
-const output = fs.createWriteStream(filepath);
+const output = fs.createWriteStream(filepath, { flags: 'a' });
 
 stdout.write('Please, write text for file, if you want to end - write "exit + enter" or use "ctrl+c"\n');
 stdin.on("data", (data) => {
